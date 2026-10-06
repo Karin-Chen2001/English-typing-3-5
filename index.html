@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>英打樂園｜開發歷程</title>
+<style>
+  :root { --ink:#3b2a6b; --bg:#fff3c4; --pink:#ff5c8a; --teal:#2ec4b6; --blue:#6c8cff; --orange:#ff9f43; }
+  * { box-sizing: border-box; }
+  body { margin:0; color:var(--ink); background-color:var(--bg);
+         background-image:radial-gradient(#ffe08a 3px, transparent 3px); background-size:30px 30px;
+         font-family:"Arial Rounded MT Bold","Noto Sans TC","Microsoft JhengHei",sans-serif; font-weight:700; }
+  main { max-width:1100px; margin:0 auto; padding:2.5rem 1.25rem 4rem; text-align:center; }
+  h1 { font-size:clamp(2.2rem,6vw,3.6rem); margin:0 0 .4rem; text-shadow:4px 4px 0 var(--pink); letter-spacing:.05em; }
+  .lead { margin:0 0 2.5rem; font-size:1.15rem; }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; }
+  .card { display:block; padding:1.5rem 1.1rem 1.2rem; color:var(--ink); text-decoration:none; background:#fff;
+          border:4px solid var(--ink); border-radius:24px; box-shadow:6px 6px 0 var(--ink);
+          transition:transform .15s, box-shadow .15s; }
+  .card:nth-child(1) { background:#d7f9f1; transform:rotate(-2deg); }
+  .card:nth-child(2) { background:#dfe6ff; transform:rotate(1.5deg); }
+  .card:nth-child(3) { background:#ffe0ec; transform:rotate(-1.5deg); }
+  .card:nth-child(4) { background:#ffe9c9; transform:rotate(2deg); }
+  .card:hover, .card:focus-visible { transform:translate(-3px,-5px) rotate(0); box-shadow:10px 11px 0 var(--ink); outline:none; }
+  .icon { font-size:3.2rem; display:block; margin-bottom:.4rem; }
+  .card h2 { margin:0 0 .5rem; font-size:1.4rem; }
+  .card p { margin:0; line-height:1.6; font-weight:600; font-size:.98rem; }
+  .tag { display:inline-block; margin-top:1rem; padding:.3rem .9rem; border-radius:999px; background:var(--ink); color:#fff; font-size:.9rem; }
+  @media (max-width:950px) { .grid { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:520px) { .grid { grid-template-columns:1fr; } }
+  @media (prefers-reduced-motion:reduce) { .card { transition:none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>🎮 英打樂園</h1>
+  <p class="lead">從一顆按鈕開始，一關一關闖到打字高手！</p>
+  <div class="grid">
+    <a class="card" href="https://karin-chen2001.github.io/English-typing-1/" target="_blank" rel="noopener">
+      <span class="icon">🌱</span><h2>第 1 關</h2><p>種下第一顆種子：標題和開始按鈕。</p><span class="tag">另開新分頁</span>
+    </a>
+    <a class="card" href="https://karin-chen2001.github.io/English-typing-2/" target="_blank" rel="noopener">
+      <span class="icon">🔔</span><h2>第 2 關</h2><p>鍵盤長出來了，按開始會「嗶嗶」！</p><span class="tag">另開新分頁</span>
+    </a>
+    <a class="card" href="v3/index.html">
+      <span class="icon">👾</span><h2>第 3 關</h2><p>餵飽小怪獸：按對 ASDF 就有糖吃。</p><span class="tag">開始玩</span>
+    </a>
+    <a class="card" href="v4/index.html">
+      <span class="icon">🍎</span><h2>第 4 關</h2><p>水果雨來了！在落地前打出字母。</p><span class="tag">開始玩</span>
+    </a>
+  </div>
+</main>
+</body>
+</html>

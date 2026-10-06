@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 4 關：水果雨</title>
+<style>
+  :root { --ink:#3b2a6b; --bg:#ffe9c9; --pink:#ff5c8a; --line:#3b2a6b; }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; padding:1.5rem 1rem 3rem; text-align:center; color:var(--ink); background-color:var(--bg);
+         background-image:radial-gradient(#ffd29a 3px, transparent 3px); background-size:30px 30px;
+         font-family:"Arial Rounded MT Bold","Noto Sans TC","Microsoft JhengHei",sans-serif; font-weight:700; }
+  h1 { font-size:clamp(1.8rem,5vw,2.6rem); margin:.3rem 0; text-shadow:3px 3px 0 #fff; }
+  a { color:#d6336c; }
+  .tip { margin:.3rem 0 .8rem; font-weight:600; }
+  .stats { display:flex; justify-content:center; gap:.8rem; flex-wrap:wrap; margin:.8rem 0; }
+  .chip { background:#fff; border:3px solid var(--ink); border-radius:16px; padding:.3rem 1.1rem; box-shadow:4px 4px 0 var(--ink); }
+  .chip b { font-size:1.6rem; display:block; line-height:1.2; }
+  #area { position:relative; width:min(92vw,560px); height:340px; margin:0 auto 1rem; overflow:hidden;
+          background:linear-gradient(#bfe8ff, #effaff); border:4px solid var(--ink); border-radius:24px; box-shadow:6px 6px 0 var(--ink); }
+  #area::before { content:"☁️"; position:absolute; top:14px; left:10%; font-size:2.4rem; opacity:.8; }
+  #area::after { content:"☁️"; position:absolute; top:46px; right:8%; font-size:2rem; opacity:.7; }
+  #ground { position:absolute; left:0; right:0; bottom:0; height:16px; background:#5cc96b; border-top:4px solid var(--ink); }
+  #letter { position:absolute; top:0; width:60px; height:60px; display:grid; place-items:center; font-size:2rem; color:var(--ink);
+            background:#fff; border:4px solid var(--ink); border-radius:50%; transform:translateX(-50%); box-shadow:3px 3px 0 var(--ink); }
+  #letter::before { content:attr(data-f); position:absolute; top:-22px; left:50%; transform:translateX(-50%); font-size:1.5rem; }
+  #overlay { position:absolute; inset:0; display:grid; place-items:center; background:rgba(255,255,255,.9); padding:1rem; font-size:1.25rem; line-height:1.8; }
+  .pop { position:absolute; font-size:2.4rem; transform:translateX(-50%); animation:pop .5s ease-out forwards; pointer-events:none; }
+  @keyframes pop { from { opacity:1; transform:translateX(-50%) scale(.6); } to { opacity:0; transform:translateX(-50%) scale(1.8); } }
+  .controls { display:flex; flex-wrap:wrap; gap:.75rem; justify-content:center; align-items:center; margin:.5rem 0; }
+  button { font:inherit; font-size:1.1rem; padding:.55rem 1.6rem; cursor:pointer; color:var(--ink); background:#ffd84d;
+           border:3px solid var(--ink); border-radius:999px; box-shadow:4px 4px 0 var(--ink); }
+  button:active:not(:disabled) { transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  #hint { min-height:1.6em; font-size:1.15rem; margin:.5rem 0; }
+  .setting { margin:.8rem auto; max-width:480px; background:#fff; border:3px solid var(--ink); border-radius:18px; padding:.8rem 1rem; box-shadow:4px 4px 0 var(--ink); }
+  .setting input[type=range] { width:min(80vw,280px); vertical-align:middle; accent-color:var(--pink); }
+  .kb { display:inline-flex; flex-direction:column; gap:6px; padding:14px; background:#fff; border:4px solid var(--ink); border-radius:22px; box-shadow:6px 6px 0 var(--ink); margin-top:1rem; }
+  .row { display:flex; gap:6px; }
+  .row:nth-child(2) { margin-left:20px; } .row:nth-child(3) { margin-left:40px; }
+  .key { width:clamp(24px,6.6vw,46px); height:clamp(24px,6.6vw,46px); display:grid; place-items:center; background:#f1ecff;
+         border:2px solid var(--line); border-radius:10px; text-transform:uppercase; }
+  .key.on { background:var(--pink); color:#fff; }
+  @media (prefers-reduced-motion:reduce) { .pop { animation:none; opacity:0; } }
+</style>
+</head>
+<body>
+  <h1>🍎 第 4 關：水果雨</h1>
+  <p><a href="../index.html">← 回英打樂園首頁</a></p>
+  <p class="tip">水果掉下來了！在落地前按對字母，把它打爆。請切換成英文輸入，分號請按鍵盤上的 ; 鍵。</p>
+
+  <div class="stats">
+    <div class="chip">🎯 題目<b id="qNo">0 / 10</b></div>
+    <div class="chip">⭐ 得分<b id="score">0</b></div>
+    <div class="chip">💦 落地<b id="missed">0</b></div>
+  </div>
+
+  <div id="area">
+    <div id="letter" hidden></div>
+    <div id="ground"></div>
+    <div id="overlay">按「開始」玩一回合，共十顆水果！</div>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn" type="button">開始</button>
+    <button id="pauseBtn" type="button" disabled>暫停</button>
+  </div>
+  <p id="hint" role="status"></p>
+
+  <div class="setting">
+    <label>每個字母落地時間：<b id="secVal">8</b> 秒（越大越慢）<br>
+      <input id="secs" type="range" min="3" max="14" step="1" value="8">
+    </label>
+    <br>
+    <label><input id="prog" type="checkbox"> 🚀 漸進加速（每答對三題縮短一秒，最短三秒）</label>
+  </div>
+
+  <div class="kb" id="kb" aria-hidden="true"></div>
+
+<script>
+  const rows = ["qwertyuiop", "asdfghjkl;", "zxcvbnm,./"];
+  const kb = document.getElementById("kb"), keyEls = {};
+  rows.forEach(r => {
+    const row = document.createElement("div"); row.className = "row";
+    [...r].forEach(c => { const k = document.createElement("div"); k.className = "key"; k.textContent = c; keyEls[c] = k; row.appendChild(k); });
+    kb.appendChild(row);
+  });
+
+  const KEYS = ["a","s","d","f","g","h","j","k","l",";"], TOTAL = 10;
+  const FRUITS = ["🍎","🍌","🍇","🍓","🍊","🍉","🍑","🍍"];
+  const $ = id => document.getElementById(id);
+  const area = $("area"), letter = $("letter"), overlay = $("overlay"), hint = $("hint");
+  const startBtn = $("startBtn"), pauseBtn = $("pauseBtn"), secs = $("secs"), prog = $("prog");
+
+  let state = "idle";            // idle | running | paused | done
+  let idx = 0, score = 0, missed = 0, target = null, progress = 0, last = 0, ac = null;
+
+  function blip(f) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "triangle"; o.frequency.value = f; g.gain.value = 0.08;
+      o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.12);
+    } catch (e) {}
+  }
+  function pop(emoji, top) {
+    const p = document.createElement("div");
+    p.className = "pop"; p.textContent = emoji;
+    p.style.left = letter.style.left || "50%"; p.style.top = top;
+    area.appendChild(p); setTimeout(() => p.remove(), 500);
+  }
+
+  secs.addEventListener("input", () => {
+    $("secVal").textContent = secs.value;
+    if (state === "running") pause();   // 調整速度時先暫停，調好按「繼續」
+  });
+
+  function fallSeconds() {
+    const base = Number(secs.value);
+    return prog.checked ? Math.max(3, base - Math.floor(score / 3)) : base;
+  }
+  function updateStats() {
+    $("qNo").textContent = Math.min(idx + 1, TOTAL) + " / " + TOTAL;
+    $("score").textContent = score; $("missed").textContent = missed;
+  }
+  function lightKey(t) {
+    Object.values(keyEls).forEach(k => k.classList.remove("on"));
+    if (t) keyEls[t].classList.add("on");
+  }
+  function spawn() {
+    target = KEYS[Math.floor(Math.random() * KEYS.length)];
+    progress = 0;
+    letter.textContent = target.toUpperCase();
+    letter.setAttribute("data-f", FRUITS[Math.floor(Math.random() * FRUITS.length)]);
+    letter.style.left = (12 + Math.random() * 76) + "%";
+    letter.style.top = "0px";
+    letter.hidden = false; lightKey(target); updateStats();
+  }
+  function advance() {
+    idx++;
+    if (idx >= TOTAL) return finish();
+    spawn();
+  }
+  function finish() {
+    state = "done"; letter.hidden = true; lightKey(null);
+    const stars = score >= 9 ? "⭐⭐⭐" : score >= 6 ? "⭐⭐" : score >= 3 ? "⭐" : "💪";
+    const msg = score >= 9 ? "水果大師！" : score >= 6 ? "很不錯喔！" : score >= 3 ? "繼續加油！" : "再練一次會更好！";
+    overlay.hidden = false;
+    overlay.innerHTML = stars + "<br>" + msg + "<br>打爆 " + score + " 顆，落地 " + missed + " 顆<br>按「開始」再玩一次。";
+    startBtn.textContent = "重新開始"; pauseBtn.disabled = true; pauseBtn.textContent = "暫停";
+    hint.textContent = "";
+  }
+  function start() {
+    idx = 0; score = 0; missed = 0; state = "running";
+    overlay.hidden = true; startBtn.textContent = "重新開始";
+    pauseBtn.disabled = false; pauseBtn.textContent = "暫停"; hint.textContent = "";
+    blip(660); spawn(); last = performance.now(); requestAnimationFrame(loop);
+  }
+  function pause() {
+    if (state !== "running") return;
+    state = "paused"; pauseBtn.textContent = "繼續";
+    overlay.hidden = false; overlay.textContent = "⏸ 已暫停。調好設定後按「繼續」。";
+  }
+  function resume() {
+    if (state !== "paused") return;
+    state = "running"; pauseBtn.textContent = "暫停"; overlay.hidden = true;
+    last = performance.now(); requestAnimationFrame(loop);
+  }
+  function loop(now) {
+    if (state !== "running") return;
+    progress += (now - last) / 1000 / fallSeconds(); last = now;
+    if (progress >= 1) {
+      missed++; hint.textContent = "落地了：" + target.toUpperCase();
+      pop("💦", (area.clientHeight - 70) + "px"); blip(220);
+      advance(); if (state !== "running") return;
+    }
+    const maxTop = area.clientHeight - letter.offsetHeight - 16;
+    letter.style.top = (Math.min(progress, 1) * maxTop) + "px";
+    requestAnimationFrame(loop);
+  }
+
+  startBtn.addEventListener("click", () => { start(); startBtn.blur(); });
+  pauseBtn.addEventListener("click", () => { state === "running" ? pause() : resume(); pauseBtn.blur(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });
+
+  document.addEventListener("keydown", e => {
+    if (state !== "running" || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k.length !== 1) return;
+    if (k === target) {
+      score++; hint.textContent = "答對了！💥";
+      pop("💥", letter.style.top); blip(880); advance();
+    } else { hint.textContent = "按錯了，水果繼續掉！"; blip(220); }
+  });
+</script>
+</body>
+</html>

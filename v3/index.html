@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 3 關：餵飽小怪獸</title>
+<style>
+  :root { --ink:#3b2a6b; --bg:#ffe0ec; --pink:#ff5c8a; --teal:#2ec4b6; --line:#3b2a6b; }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; padding:1.5rem 1rem 3rem; text-align:center; color:var(--ink); background-color:var(--bg);
+         background-image:radial-gradient(#ffc2d9 3px, transparent 3px); background-size:30px 30px;
+         font-family:"Arial Rounded MT Bold","Noto Sans TC","Microsoft JhengHei",sans-serif; font-weight:700; }
+  h1 { font-size:clamp(1.8rem,5vw,2.6rem); margin:.3rem 0; text-shadow:3px 3px 0 #fff; }
+  a { color:#d6336c; }
+  .tip { margin:.3rem 0 1rem; font-weight:600; }
+  .stage { display:flex; justify-content:center; align-items:center; gap:clamp(1rem,5vw,3rem); flex-wrap:wrap; margin:1rem 0; }
+  #monster { font-size:clamp(5rem,16vw,8rem); line-height:1; display:inline-block; }
+  .bubble { background:#fff; border:4px solid var(--ink); border-radius:28px; box-shadow:6px 6px 0 var(--ink);
+            padding:.2rem 1.6rem; min-width:7rem; }
+  .bubble small { display:block; font-size:.9rem; font-weight:600; margin-top:.4rem; }
+  #target { font-size:5.5rem; line-height:1.1; color:var(--pink); }
+  .scores { display:flex; gap:1rem; justify-content:center; margin:.5rem 0; }
+  .chip { background:#fff; border:3px solid var(--ink); border-radius:16px; padding:.3rem 1.2rem; box-shadow:4px 4px 0 var(--ink); }
+  .chip b { font-size:1.8rem; display:block; line-height:1.2; }
+  #hint { min-height:1.6em; font-size:1.2rem; margin:.8rem 0; }
+  .controls { display:flex; gap:.75rem; justify-content:center; margin:.5rem 0 1.5rem; }
+  button { font:inherit; font-size:1.1rem; padding:.55rem 1.6rem; cursor:pointer; color:var(--ink); background:#ffd84d;
+           border:3px solid var(--ink); border-radius:999px; box-shadow:4px 4px 0 var(--ink); }
+  button:active:not(:disabled) { transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .kb { display:inline-flex; flex-direction:column; gap:6px; padding:14px; background:#fff; border:4px solid var(--ink); border-radius:22px; box-shadow:6px 6px 0 var(--ink); }
+  .row { display:flex; gap:6px; }
+  .row:nth-child(2) { margin-left:20px; } .row:nth-child(3) { margin-left:40px; }
+  .key { width:clamp(26px,7vw,52px); height:clamp(26px,7vw,52px); display:grid; place-items:center; background:#f1ecff;
+         border:2px solid var(--line); border-radius:10px; text-transform:uppercase; position:relative; }
+  .key.on { background:var(--pink); border-color:var(--ink); color:#fff; animation:hop .6s ease-in-out infinite; }
+  @keyframes hop { 50% { transform:translateY(-6px); } }
+  .happy { animation:happy .45s ease; } .oops { animation:oops .45s ease; }
+  @keyframes happy { 30% { transform:scale(1.3) rotate(-8deg); } 60% { transform:scale(.95) rotate(6deg); } }
+  @keyframes oops { 20%,60% { transform:translateX(-12px); } 40%,80% { transform:translateX(12px); } }
+  @media (prefers-reduced-motion:reduce) { .key.on, .happy, .oops { animation:none; } }
+</style>
+</head>
+<body>
+  <h1>👾 第 3 關：餵飽小怪獸</h1>
+  <p><a href="../index.html">← 回英打樂園首頁</a></p>
+  <p class="tip">小怪獸肚子餓了！按下亮起來的鍵餵牠吃糖。請切換成英文輸入。</p>
+
+  <div class="stage">
+    <div id="monster" aria-hidden="true">👾</div>
+    <div class="bubble"><small>請按</small><div id="target">-</div></div>
+  </div>
+
+  <div class="scores">
+    <div class="chip">🍬 糖果<b id="score">0</b></div>
+    <div class="chip">🔥 連擊<b id="combo">0</b></div>
+  </div>
+  <p id="hint" role="status">按「開始」叫醒小怪獸！</p>
+
+  <div class="controls">
+    <button id="startBtn" type="button">開始</button>
+    <button id="stopBtn" type="button" disabled>停止練習</button>
+  </div>
+  <div class="kb" id="kb" aria-hidden="true"></div>
+
+<script>
+  const rows = ["qwertyuiop", "asdfghjkl;", "zxcvbnm,./"];
+  const kb = document.getElementById("kb");
+  const keyEls = {};
+  rows.forEach(r => {
+    const row = document.createElement("div"); row.className = "row";
+    [...r].forEach(c => { const k = document.createElement("div"); k.className = "key"; k.textContent = c; keyEls[c] = k; row.appendChild(k); });
+    kb.appendChild(row);
+  });
+
+  const pool = ["a", "s", "d", "f"];
+  const praise = ["好吃！", "太棒了！", "再來一顆！", "你好厲害！", "咕嚕咕嚕～"];
+  const targetEl = document.getElementById("target"), scoreEl = document.getElementById("score"),
+        comboEl = document.getElementById("combo"), hint = document.getElementById("hint"),
+        monster = document.getElementById("monster");
+  const startBtn = document.getElementById("startBtn"), stopBtn = document.getElementById("stopBtn");
+  let target = null, score = 0, combo = 0, running = false, ac = null;
+
+  function blip(f) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = "triangle"; o.frequency.value = f; g.gain.value = 0.08;
+      o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.12);
+    } catch (e) {}
+  }
+  function react(face, cls) {
+    monster.textContent = face;
+    monster.classList.remove("happy", "oops"); void monster.offsetWidth; monster.classList.add(cls);
+  }
+  function showTarget(t) {
+    Object.values(keyEls).forEach(k => k.classList.remove("on"));
+    target = t;
+    targetEl.textContent = t ? t.toUpperCase() : "-";
+    if (t) keyEls[t].classList.add("on");
+  }
+  function nextTarget() { showTarget(pool[Math.floor(Math.random() * pool.length)]); }
+
+  startBtn.addEventListener("click", () => {
+    score = 0; combo = 0; scoreEl.textContent = 0; comboEl.textContent = 0; running = true;
+    monster.textContent = "👾";
+    hint.textContent = "開始！小怪獸張大嘴巴了～";
+    startBtn.textContent = "重新開始"; stopBtn.disabled = false;
+    blip(660); startBtn.blur(); nextTarget();
+  });
+  stopBtn.addEventListener("click", () => {
+    running = false; showTarget(null); monster.textContent = "😴";
+    hint.textContent = "小怪獸睡著了。你餵了 " + score + " 顆糖！";
+    stopBtn.disabled = true;
+  });
+  document.addEventListener("keydown", e => {
+    if (!running || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k.length !== 1) return;
+    if (k === target) {
+      score++; combo++; scoreEl.textContent = score; comboEl.textContent = combo;
+      hint.textContent = praise[Math.floor(Math.random() * praise.length)] + (combo >= 5 ? " 🔥 連擊 " + combo + "！" : "");
+      react("😋", "happy"); blip(880 + Math.min(combo, 8) * 60); nextTarget();
+    } else {
+      combo = 0; comboEl.textContent = 0;
+      hint.textContent = "哎呀！小怪獸要吃的是 " + target.toUpperCase();
+      react("😵", "oops"); blip(220);
+    }
+  });
+</script>
+</body>
+</html>
